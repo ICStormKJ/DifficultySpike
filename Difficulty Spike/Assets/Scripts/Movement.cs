@@ -8,16 +8,20 @@ public class Movement : MonoBehaviour
     [SerializeField] private Rigidbody2D playerRB;
     [SerializeField] private Transform groundCheck;
 
-    [SerializeField] private float jumpSpeed = 1f;
-    [SerializeField] private float moveSpeed = 1f;
+    [SerializeField] private float jumpSpeed;
+    [SerializeField] private float moveSpeed;
+    [SerializeField] private float dashSpeed = 15f;
 
     private float jumpHoldDuration = 0.0f;
     private float maxJumpHoldTime = 0.1f;
 
-    private int maxDashes = 1;
-    private int dashesRemaining = 1;
-    private float dashCooldown = 0f;
-    private float dashCooldownDuration = 0.5f;
+
+    private int maxDashes = 1;      
+    private int dashesRemaining = 1;                //To be changed once a player uses a dash
+    private float dashCooldown = 0f;                //Timer that counts time since dash usage, to be used for dash cooldown
+    private float dashCooldownDuration = 0.6f;      
+    private float dashDuration = 0.15f;              //Player is floaty during a dash
+    private float dashTimer = 0f;                   //Timer that counts time since dash usage, to be used for behaviors during a player's dash
 
     private bool grounded = false;
 
@@ -46,7 +50,6 @@ public class Movement : MonoBehaviour
         else if (context.canceled)
         {
             jumpInputDown = false;
-            jumpHoldDuration += maxJumpHoldTime;
         }
     }
 
@@ -75,7 +78,7 @@ public class Movement : MonoBehaviour
     void Update()
     {
         //Ground detection
-        RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector3.down, 0.05f);
+        RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector3.down, 0.005f);
         grounded = false;
         if (hit) { grounded = hit.collider.gameObject.CompareTag("Ground"); }
 
@@ -87,13 +90,13 @@ public class Movement : MonoBehaviour
         }
 
         //Gravity shit
-        if (playerRB.linearVelocity.y >= 0)
+        if (grounded || playerRB.linearVelocity.y >= 0f || dashTimer < dashDuration)
         {
-            playerRB.gravityScale = 1;
+            playerRB.gravityScale = 1f;
         }
         else
         {
-            playerRB.gravityScale = 3;
+            playerRB.gravityScale = 3f;
         }
 
         //Player direction
@@ -111,20 +114,30 @@ public class Movement : MonoBehaviour
             dashInputDown = false;
             dashesRemaining -= 1;
             dashCooldown = 0f;
-            int dashDirection = 1;
+            int dashDirection = 1;  //1 for facing right, -1 for facing left
             if (!facingRight) { dashDirection = -1; }
             if(Mathf.Sign(dashDirection) != Mathf.Sign(playerRB.linearVelocityX)) { playerRB.linearVelocityX = 0f; }
-            playerRB.AddForce(transform.right * dashDirection * moveSpeed * 0.66f, ForceMode2D.Impulse);
+            dashTimer = 0f;
+            if(playerRB.linearVelocityY < 0f) {
+                playerRB.linearVelocityY = jumpSpeed;
+            }
+            playerRB.AddForce(transform.right * dashDirection * dashSpeed, ForceMode2D.Impulse);
+        }
+        if(!grounded && dashTimer < dashDuration)   //Give player a bit of weightlessness when dashing
+        {
+           // playerRB.AddForce(Vector2.up * -Physics2D.gravity * 0.5f, ForceMode2D.Force);
         }
 
         //Cooldowns
         dashCooldown += Time.deltaTime;
+        dashTimer += Time.deltaTime;
     }
     void FixedUpdate()
     {
         //Jump & held jump
         if (jumpInputDown)
         {
+            bool firstFrameOfJump = jumpHoldDuration == 0f;
             jumpHoldDuration += Time.deltaTime;
             if(jumpHoldDuration <= 0)
             {
@@ -132,17 +145,25 @@ public class Movement : MonoBehaviour
             }
             if (jumpHoldDuration <= maxJumpHoldTime)
             {
-                playerRB.AddForce(transform.up * jumpSpeed, ForceMode2D.Impulse);
+                float higherJumpMultiplier = (1f - (jumpHoldDuration / maxJumpHoldTime)) * 0.75f;
+                higherJumpMultiplier = Mathf.Sqrt(1f - Mathf.Pow(higherJumpMultiplier - 1f, 2f)); //Higher jump multiplier follows circ-out easing curve
+                                                                                                  //Meaning the longer the button is held the less force is applied
+                if (firstFrameOfJump)   //More impulse on the first frame of the jump
+                {
+                    higherJumpMultiplier = 2f;
+                }
+                playerRB.AddForce(transform.up * jumpSpeed * higherJumpMultiplier, ForceMode2D.Impulse);
             }
         }
 
         //Movement
         float movementMultiplier = 1f;
         if (!grounded) { movementMultiplier = 0.1f; }  //Movement is reduced if airbourne
-        if (Mathf.Sign(inputDirection.x) == Mathf.Sign(playerRB.linearVelocityX) && Mathf.Abs(playerRB.linearVelocityX) >= 10f) { movementMultiplier = 0f; }
+        bool movingInDirectionOfSpeed = Mathf.Sign(inputDirection.x) == Mathf.Sign(playerRB.linearVelocityX);
+        if (movingInDirectionOfSpeed && Mathf.Abs(playerRB.linearVelocityX) >= 10f) { movementMultiplier = 0f; } 
         playerRB.AddForce(transform.right * moveSpeed * inputDirection.x * movementMultiplier);
 
-        /*
+        /*s
         if (Input.GetKey(KeyCode.A))
         {
             if (playerRB.linearVelocityX > -10)
