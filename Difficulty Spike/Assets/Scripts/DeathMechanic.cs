@@ -36,18 +36,19 @@ public class DeathMechanic : MonoBehaviour
         transform.position = new Vector2(transform.position.x + xdis, transform.position.y + ydis);
     }
 
+//NOTE: TryGetComponent is a version of GetComponent that stores 
+//a component into the variable in the parameter, and returns a bool on if it was successful
+
 //Toggles the object to appear or disappear. 
     public void ToggleAppear(){
-        SpriteRenderer r;
-        if (gameObject.TryGetComponent<SpriteRenderer>(out r)){
+        if (gameObject.TryGetComponent<SpriteRenderer>(out SpriteRenderer r)){
             r.enabled = !r.enabled;
         }
     }
 
 //Makes object affected by gravity
     public void Fall(){
-        Rigidbody2D rb;
-        if (gameObject.TryGetComponent<Rigidbody2D>(out rb)){
+        if (gameObject.TryGetComponent<Rigidbody2D>(out Rigidbody2D rb)){
             rb.gravityScale = 1;
             transform.rotation = Quaternion.Euler(0, -180, 0);
         }
