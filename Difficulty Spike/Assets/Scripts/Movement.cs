@@ -81,7 +81,7 @@ public class Movement : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector3.down, 0.005f);
         grounded = false;
         if (hit) { grounded = hit.collider.gameObject.CompareTag("Ground"); }
-
+        Debug.Log(grounded);
         //Reset jump & dash
         if (grounded)
         {
