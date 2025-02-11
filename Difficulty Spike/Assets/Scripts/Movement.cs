@@ -79,9 +79,7 @@ public class Movement : MonoBehaviour
     {
         //Ground detection
         RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector3.down, 0.005f);
-        Debug.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * 0.005f);
         grounded = false;
-        Debug.Log(grounded);
         if (hit) { grounded = hit.collider.gameObject.CompareTag("Ground"); }
 
         //Reset jump & dash
