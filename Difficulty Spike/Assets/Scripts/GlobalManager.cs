@@ -3,7 +3,7 @@ using UnityEngine;
 public class GlobalManager : MonoBehaviour
 {
     [SerializeField]
-    float moveSpeedModifier, jumpHeightModifier;
+    float moveSpeedModifier, jumpHeightModifier = 1.0f;
     void Awake(){
         DontDestroyOnLoad(gameObject);
     }
