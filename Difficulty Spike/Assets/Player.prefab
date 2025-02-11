@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8588942942443072935}
   - component: {fileID: 739411315095196192}
-  - component: {fileID: 6827612300563149468}
+  - component: {fileID: 8275427616244813492}
   - component: {fileID: 901524335322863737}
   - component: {fileID: 1577173426412021237}
   m_Layer: 0
@@ -83,7 +83,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
---- !u!114 &6827612300563149468
+--- !u!114 &8275427616244813492
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,13 +92,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 5281436109231580649}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4faaf91cfef7a0e42b867f7a491ed7a1, type: 3}
+  m_Script: {fileID: 11500000, guid: 3a13bcbf77e30ec4a93cf8174b782094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   playerRB: {fileID: 1577173426412021237}
   groundCheck: {fileID: 2581163364369198633}
-  jumpSpeed: 1.5
-  moveSpeed: 30
+  jumpSpeed: 1.2
+  moveSpeed: 50
   dashSpeed: 15
 --- !u!114 &901524335322863737
 MonoBehaviour:
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_ActionEvents:
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6827612300563149468}
+      - m_Target: {fileID: 8275427616244813492}
         m_TargetAssemblyTypeName: Movement, Assembly-CSharp
         m_MethodName: movementInput
         m_Mode: 0
@@ -143,7 +143,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Move[/Keyboard/w,/Keyboard/s,/Keyboard/a,/Keyboard/d,/Keyboard/upArrow,/Keyboard/downArrow,/Keyboard/leftArrow,/Keyboard/rightArrow]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6827612300563149468}
+      - m_Target: {fileID: 8275427616244813492}
         m_TargetAssemblyTypeName: Movement, Assembly-CSharp
         m_MethodName: jumpInput
         m_Mode: 0
@@ -159,7 +159,7 @@ MonoBehaviour:
     m_ActionName: 'Player/Jump[/Keyboard/space]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 6827612300563149468}
+      - m_Target: {fileID: 8275427616244813492}
         m_TargetAssemblyTypeName: Movement, Assembly-CSharp
         m_MethodName: dashInput
         m_Mode: 0
