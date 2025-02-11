@@ -13,7 +13,7 @@ public class Movement : MonoBehaviour
     [SerializeField] private float dashSpeed = 15f;
 
     private float jumpHoldDuration = 0.0f;
-    private float maxJumpHoldTime = 0.1f;
+    private float maxJumpHoldTime = 0.2f;
 
 
     private int maxDashes = 1;      
@@ -78,11 +78,9 @@ public class Movement : MonoBehaviour
     void Update()
     {
         //Ground detection
-        RaycastHit2D hit = Physics2D.Raycast(groundCheck.position, Vector3.down, 0.005f);
-        Debug.DrawLine(groundCheck.position, groundCheck.position + Vector3.down * 0.005f);
+        RaycastHit2D hit = Physics2D.BoxCast(groundCheck.position, new Vector2(1f, 0.005f), 0f, Vector2.up);
         grounded = false;
         if (hit) { grounded = hit.collider.gameObject.CompareTag("Ground"); }
-        Debug.Log(grounded);
         //Reset jump & dash
         if (grounded)
         {

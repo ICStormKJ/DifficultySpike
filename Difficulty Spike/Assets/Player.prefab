@@ -81,7 +81,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 1, y: 2}
   m_EdgeRadius: 0
 --- !u!114 &8275427616244813492
 MonoBehaviour:
@@ -97,7 +97,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerRB: {fileID: 1577173426412021237}
   groundCheck: {fileID: 2581163364369198633}
-  jumpSpeed: 1.2
+  jumpSpeed: 1.75
   moveSpeed: 50
   dashSpeed: 15
 --- !u!114 &901524335322863737
@@ -317,7 +317,7 @@ Transform:
   m_GameObject: {fileID: 8029194005019853821}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.005, z: 0}
+  m_LocalPosition: {x: 0, y: -1.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
