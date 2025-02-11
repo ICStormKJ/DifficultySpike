@@ -173,7 +173,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4faaf91cfef7a0e42b867f7a491ed7a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerRB: {fileID: 0}
+  playerRB: {fileID: 1577173426412021237}
   groundCheck: {fileID: 2581163364369198633}
   jumpSpeed: 1.5
   moveSpeed: 30
