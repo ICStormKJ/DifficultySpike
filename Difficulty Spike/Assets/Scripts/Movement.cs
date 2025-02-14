@@ -1,3 +1,4 @@
+using Unity.VisualScripting.Dependencies.Sqlite;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,12 +10,12 @@ public class Movement : MonoBehaviour
     [SerializeField] private Transform groundCheck;
 
     [SerializeField] private float jumpSpeed;
-    [SerializeField] private float moveSpeed;
+    [SerializeField] private float movementAcceleration;
+    [SerializeField] private float moveSpeedSoftCap;
     [SerializeField] private float dashSpeed = 15f;
 
-    private float jumpHoldDuration = 0.0f;
-    private float maxJumpHoldTime = 0.2f;
-
+    private float jumpHoldDuration = 0.0f;    
+    private float maxJumpHoldTime = 0.2f;           //How long in seconds it takes for a jump to reach its apex
 
     private int maxDashes = 1;      
     private int dashesRemaining = 1;                //To be changed once a player uses a dash
@@ -30,6 +31,7 @@ public class Movement : MonoBehaviour
     private bool dashInputDown = false;
 
     private bool facingRight = true;
+    private Vector3 groundNormal;
 
 
     //Movement Methods
@@ -78,11 +80,33 @@ public class Movement : MonoBehaviour
     void Update()
     {
         //Ground detection
-        RaycastHit2D hit = Physics2D.BoxCast(groundCheck.position, new Vector2(1f, 0.005f), 0f, Vector2.up);
+        RaycastHit2D hit = Physics2D.BoxCast(groundCheck.position, new Vector2(1.005f, 0.002f), 0f, Vector2.up);
+        groundNormal = Vector3.up;
         grounded = false;
-        if (hit) { grounded = hit.collider.gameObject.CompareTag("Ground"); }
+        if (hit) { 
+            grounded = hit.collider.gameObject.CompareTag("Ground");
+        }
+
+        //Player direction
+        if (inputDirection.x > 0)
+        {
+            facingRight = true;
+        }
+        else if (inputDirection.x < 0)
+        {
+            facingRight = false;
+        }
+
+        //Detect slopes
+        hit = Physics2D.BoxCast(playerRB.transform.position + new Vector3(0.445f * (facingRight ? 1f : -1f), -0.945f), new Vector2(0.1f, 0.1f), 0f, Vector2.up);
+        if (hit & hit.collider.gameObject.CompareTag("Ground"))
+        {
+            groundNormal = hit.normal;
+        }
+
         //Reset jump & dash
-        if (grounded)
+        bool jumping = jumpInputDown && jumpHoldDuration <= maxJumpHoldTime && playerRB.linearVelocityY >= 0f;
+        if (grounded && !jumping)
         {
             jumpHoldDuration = 0.0f;
             dashesRemaining = maxDashes;
@@ -96,15 +120,6 @@ public class Movement : MonoBehaviour
         else
         {
             playerRB.gravityScale = 3f;
-        }
-
-        //Player direction
-        if(inputDirection.x > 0)
-        {
-            facingRight = true;
-        }else if(inputDirection.x < 0)
-        {
-            facingRight = false;
         }
 
         //Dashing
@@ -133,7 +148,8 @@ public class Movement : MonoBehaviour
     }
     void FixedUpdate()
     {
-        //Jump & held jump
+        //JUMP
+        ///////////////////////////////////////////////////
         if (jumpInputDown)
         {
             bool firstFrameOfJump = jumpHoldDuration == 0f;
@@ -142,7 +158,7 @@ public class Movement : MonoBehaviour
             {
                 playerRB.linearVelocityY = 0f;
             }
-            if (jumpHoldDuration <= maxJumpHoldTime)
+            if (jumpHoldDuration <= maxJumpHoldTime && playerRB.linearVelocityY >= 0f)
             {
                 float higherJumpMultiplier = (1f - (jumpHoldDuration / maxJumpHoldTime)) * 0.75f;
                 higherJumpMultiplier = Mathf.Sqrt(1f - Mathf.Pow(higherJumpMultiplier - 1f, 2f)); //Higher jump multiplier follows circ-out easing curve
@@ -155,12 +171,39 @@ public class Movement : MonoBehaviour
             }
         }
 
-        //Movement
+        //MOVEMENT
+        ////////////////////////////////////////////////////
         float movementMultiplier = 1f;
-        if (!grounded) { movementMultiplier = 0.1f; }  //Movement is reduced if airbourne
+
+        //Apply force at angle if there is a slope
+        float groundNormalAngle = Mathf.Atan2(groundNormal.y, groundNormal.x);
+        float movementAngle = groundNormalAngle + ((Mathf.PI/2f) * (facingRight ? -1f : 1f));
+        Vector2 moveDirection = new Vector2(Mathf.Cos(movementAngle), Mathf.Sin(movementAngle));
+        //Debug.Log(moveDirection);
+
+        //Increase friction of slope when player is stopped on it
+        /*
+        bool onSlope = Mathf.Abs(groundNormalAngle) * Mathf.Rad2Deg - 2f >= 90f && Mathf.Abs(groundNormalAngle) * Mathf.Rad2Deg + 2f <= 90f;
+        if (onSlope && Mathf.Abs(inputDirection.x) - 0.1f <= 0f)
+        {
+            Debug.Log("Stopped on slope!");
+        }
+        */
+
+        //Reduce control of movement in air
+        if (!grounded) { movementMultiplier = 0.1f; }
+        //Reduce max speed when on slopes
+        float moveSpeedCap = moveSpeedSoftCap;
+        float xDirection = Mathf.Abs(moveDirection.x);
+        moveSpeedCap *= (1f - (1f - xDirection) * (1f - xDirection));
+        //Limit force applied to control speed
         bool movingInDirectionOfSpeed = Mathf.Sign(inputDirection.x) == Mathf.Sign(playerRB.linearVelocityX);
-        if (movingInDirectionOfSpeed && Mathf.Abs(playerRB.linearVelocityX) >= 10f) { movementMultiplier = 0f; } 
-        playerRB.AddForce(transform.right * moveSpeed * inputDirection.x * movementMultiplier);
+        if (movingInDirectionOfSpeed && Mathf.Abs(playerRB.linearVelocityX) >= moveSpeedCap) { movementMultiplier = 0f; }
+
+        //Apply movement force
+        playerRB.AddForce(moveDirection * movementAcceleration * Mathf.Abs(inputDirection.x) * movementMultiplier);
+
+        //Debug.Log("Ground: " + Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg + " / Movement: " + movementAngle * Mathf.Rad2Deg);
 
         /*s
         if (Input.GetKey(KeyCode.A))
