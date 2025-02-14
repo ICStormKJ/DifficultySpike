@@ -22,7 +22,7 @@ public class PlayerDeathManager : MonoBehaviour
     }
 
     void Win(){
-        globalStats.AddModifier(0.05f, 0.05f);
+       // globalStats.AddModifier(0.05f, 0.05f);
         Debug.Log("Win");
         //SceneManager.LoadScene(nextSceneName);
     }
