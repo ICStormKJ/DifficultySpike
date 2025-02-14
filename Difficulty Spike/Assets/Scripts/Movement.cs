@@ -30,6 +30,7 @@ public class Movement : MonoBehaviour
     private bool dashInputDown = false;
 
     private bool facingRight = true;
+    //private GlobalManager gm; //used for global multipliers, functionality to be tested.
 
 
     //Movement Methods
@@ -72,6 +73,7 @@ public class Movement : MonoBehaviour
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
+        //gm = FindAnyObjectByType<GlobalManager>();
     }
 
 
@@ -152,6 +154,7 @@ public class Movement : MonoBehaviour
                     higherJumpMultiplier = 2f;
                 }
                 playerRB.AddForce(transform.up * jumpSpeed * higherJumpMultiplier, ForceMode2D.Impulse);
+                //add gm.GetJumpHeightMod() later
             }
         }
 
@@ -161,6 +164,7 @@ public class Movement : MonoBehaviour
         bool movingInDirectionOfSpeed = Mathf.Sign(inputDirection.x) == Mathf.Sign(playerRB.linearVelocityX);
         if (movingInDirectionOfSpeed && Mathf.Abs(playerRB.linearVelocityX) >= 10f) { movementMultiplier = 0f; } 
         playerRB.AddForce(transform.right * moveSpeed * inputDirection.x * movementMultiplier);
+        //add gm.GetMoveSpeedMod() later
 
         /*s
         if (Input.GetKey(KeyCode.A))
