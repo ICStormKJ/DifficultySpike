@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 public class PlayerDeathManager : MonoBehaviour
 {
     [SerializeField]
-    GameObject[] deathMechanicObjects;
+    DeathMechanic[] deathMechanicObjects;
     [SerializeField]
     Transform spawnpoint;
     [SerializeField] 
@@ -15,14 +15,12 @@ public class PlayerDeathManager : MonoBehaviour
     
     void Death(){
         transform.position = spawnpoint.position;
-        GameObject obj = deathMechanicObjects[Random.Range(0, deathMechanicObjects.Length)];
-        if (obj.TryGetComponent<DeathMechanic>(out DeathMechanic dm)){
-            dm.Run();
-        }
+        DeathMechanic obj = deathMechanicObjects[Random.Range(0, deathMechanicObjects.Length)];
+        obj.Run();
     }
 
     void Win(){
-        globalStats.AddModifier(0.05f, 0.05f);
+       // globalStats.AddModifier(0.05f, 0.05f);
         Debug.Log("Win");
         //SceneManager.LoadScene(nextSceneName);
     }

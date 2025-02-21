@@ -74,6 +74,7 @@ public class Movement : MonoBehaviour
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
+        //gm = FindAnyObjectByType<GlobalManager>();
     }
 
 
@@ -168,6 +169,7 @@ public class Movement : MonoBehaviour
                     higherJumpMultiplier = 2f;
                 }
                 playerRB.AddForce(transform.up * jumpSpeed * higherJumpMultiplier, ForceMode2D.Impulse);
+                //add gm.GetJumpHeightMod() later
             }
         }
 
