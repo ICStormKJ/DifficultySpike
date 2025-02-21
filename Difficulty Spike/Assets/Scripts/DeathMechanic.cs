@@ -16,12 +16,6 @@ public class DeathMechanic : MonoBehaviour
     [SerializeField]
     float moveHorizontal, moveVertical;
 
-    // void Update(){
-    //     if(Input.GetKeyDown(KeyCode.Space)){
-    //         Run(0.5f, 0.5f);
-    //     }
-    // }
-
 //General function to run when activating a death mechanic, by player death or by item.
     public void Run(){
         if (deathMechanic.GetPersistentEventCount() != 0){
@@ -51,6 +45,12 @@ public class DeathMechanic : MonoBehaviour
         if (gameObject.TryGetComponent<Rigidbody2D>(out Rigidbody2D rb)){
             rb.gravityScale = 1;
             transform.rotation = Quaternion.Euler(0, -180, 0);
+        }
+    }
+
+    public void ToggleMoving(){
+        if (gameObject.TryGetComponent<MovingObject>(out MovingObject obj)){
+            obj.enabled = !obj.enabled;
         }
     }
     
