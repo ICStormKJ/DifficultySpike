@@ -8,6 +8,7 @@ public class Movement : MonoBehaviour
     //-------------------------------------------------------
     [SerializeField] private Rigidbody2D playerRB;
     [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundLayer;
 
     [SerializeField] private float jumpSpeed;
     [SerializeField] private float movementAcceleration;
@@ -81,11 +82,40 @@ public class Movement : MonoBehaviour
     void Update()
     {
         //Ground detection
-        RaycastHit2D hit = Physics2D.BoxCast(groundCheck.position, new Vector2(1.005f, 0.002f), 0f, Vector2.up);
+        RaycastHit2D[] hit = Physics2D.BoxCastAll(groundCheck.position, new Vector2(1f, 0.02f), 0f, Vector2.up, 1f, groundLayer);
         groundNormal = Vector3.up;
         grounded = false;
-        if (hit) { 
-            grounded = hit.collider.gameObject.CompareTag("Ground");
+        if (hit.Length > 0)
+        {
+            grounded = true;
+            RaycastHit2D slopeHit = default;
+            RaycastHit2D flatHit = default;
+            bool slopeHitFound = false;
+            bool flatHitFound = false;
+            foreach(RaycastHit2D raycastHit in hit)
+            {
+                if (raycastHit.normal == Vector2.zero) { continue; }
+                if (raycastHit.normal == Vector2.up) { flatHit = raycastHit; flatHitFound = true; }
+                else { slopeHit = raycastHit; slopeHitFound = true; }
+            }
+            bool onSlopeCorner = slopeHitFound && flatHitFound;
+            Debug.Log(flatHit.normal.ToString() + " / " + slopeHit.normal.ToString() + " / " + onSlopeCorner.ToString());
+            if (!onSlopeCorner)
+            {
+                groundNormal = flatHit.normal;
+            }
+            else
+            {
+                Vector3 hitNormal = slopeHit.normal;
+                if(Mathf.Sign(hitNormal.x) == Mathf.Sign(inputDirection.x)) //Dismounting slope
+                {
+                    groundNormal = flatHit.normal;
+                }
+                else //Boarding slope
+                {
+                    groundNormal = slopeHit.normal;
+                }
+            }
         }
 
         //Player direction
@@ -99,11 +129,13 @@ public class Movement : MonoBehaviour
         }
 
         //Detect slopes
-        hit = Physics2D.BoxCast(playerRB.transform.position + new Vector3(0.445f * (facingRight ? 1f : -1f), -0.945f), new Vector2(0.1f, 0.1f), 0f, Vector2.up);
-        if (hit & hit.collider.gameObject.CompareTag("Ground"))
+        /*
+        RaycastHit2D slopeHit = Physics2D.BoxCast(playerRB.transform.position + new Vector3(0.5f * (facingRight ? 1f : -1f), -0.945f), new Vector2(0.1f, 0.1f), 0f, Vector2.up, 1f, groundLayer);
+        if (slopeHit && slopeHit.transform.gameObject.CompareTag("Ground"))
         {
-            groundNormal = hit.normal;
+            groundNormal = slopeHit.normal;
         }
+        */
 
         //Reset jump & dash
         bool jumping = jumpInputDown && jumpHoldDuration <= maxJumpHoldTime && playerRB.linearVelocityY >= 0f;
@@ -178,9 +210,18 @@ public class Movement : MonoBehaviour
         float movementMultiplier = 1f;
 
         //Apply force at angle if there is a slope
-        float groundNormalAngle = Mathf.Atan2(groundNormal.y, groundNormal.x);
-        float movementAngle = groundNormalAngle + ((Mathf.PI/2f) * (facingRight ? -1f : 1f));
-        Vector2 moveDirection = new Vector2(Mathf.Cos(movementAngle), Mathf.Sin(movementAngle));
+        Vector2 moveDirection;
+        if (grounded)
+        {
+            float groundNormalAngle = Mathf.Atan2(groundNormal.y, groundNormal.x);
+            float movementAngle = groundNormalAngle + ((Mathf.PI / 2f) * (facingRight ? -1f : 1f));
+            moveDirection = new Vector2(Mathf.Cos(movementAngle), Mathf.Sin(movementAngle));
+        }
+        else
+        {
+            moveDirection = inputDirection;
+        }
+
         //Debug.Log(moveDirection);
 
         //Increase friction of slope when player is stopped on it
