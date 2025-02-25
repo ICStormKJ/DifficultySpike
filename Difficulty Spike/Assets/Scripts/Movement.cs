@@ -10,6 +10,11 @@ public class Movement : MonoBehaviour
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
 
+    [SerializeField] private PhysicsMaterial2D playerDefaultFriction;
+    [SerializeField] private PhysicsMaterial2D playerLessFriction;
+    [SerializeField] private PhysicsMaterial2D groundDefaultFriction;
+    [SerializeField] private PhysicsMaterial2D groundHeavyFriction;
+
     [SerializeField] private float jumpSpeed;
     [SerializeField] private float movementAcceleration;
     [SerializeField] private float moveSpeedSoftCap;
@@ -30,6 +35,7 @@ public class Movement : MonoBehaviour
     private Vector2 inputDirection;
     private bool jumpInputDown = false;
     private bool dashInputDown = false;
+    private bool firstFrameOfJump = false;
 
     private bool facingRight = true;
     private Vector3 groundNormal;
@@ -85,9 +91,11 @@ public class Movement : MonoBehaviour
         RaycastHit2D[] hit = Physics2D.BoxCastAll(groundCheck.position, new Vector2(1f, 0.02f), 0f, Vector2.up, 1f, groundLayer);
         groundNormal = Vector3.up;
         grounded = false;
+        PhysicsMaterial2D playerMaterial = playerDefaultFriction;
         if (hit.Length > 0)
         {
             grounded = true;
+            //Set the player's ground normal depending on whether they're on/off a slope or boarding a slope
             RaycastHit2D slopeHit = default;
             RaycastHit2D flatHit = default;
             bool slopeHitFound = false;
@@ -95,19 +103,31 @@ public class Movement : MonoBehaviour
             foreach(RaycastHit2D raycastHit in hit)
             {
                 if (raycastHit.normal == Vector2.zero) { continue; }
-                if (raycastHit.normal == Vector2.up) { flatHit = raycastHit; flatHitFound = true; }
-                else { slopeHit = raycastHit; slopeHitFound = true; }
+                if (raycastHit.normal == Vector2.up) {
+                    flatHit = raycastHit;
+                    flatHitFound = true;
+                } else { 
+                    slopeHit = raycastHit;
+                    slopeHitFound = true;
+                }
             }
             bool onSlopeCorner = slopeHitFound && flatHitFound;
-            Debug.Log(flatHit.normal.ToString() + " / " + slopeHit.normal.ToString() + " / " + onSlopeCorner.ToString());
+            //Debug.Log(flatHit.normal.ToString() + " / " + slopeHit.normal.ToString() + " / " + onSlopeCorner.ToString());
             if (!onSlopeCorner)
             {
-                groundNormal = flatHit.normal;
+                if (flatHitFound)
+                {
+                    groundNormal = flatHit.normal;
+                }
+                else
+                {
+                    groundNormal = slopeHit.normal;
+                }
             }
             else
             {
-                Vector3 hitNormal = slopeHit.normal;
-                if(Mathf.Sign(hitNormal.x) == Mathf.Sign(inputDirection.x)) //Dismounting slope
+                playerMaterial = playerLessFriction;
+                if(Mathf.Sign(slopeHit.normal.x) == Mathf.Sign(inputDirection.x)) //Dismounting slope
                 {
                     groundNormal = flatHit.normal;
                 }
@@ -116,7 +136,25 @@ public class Movement : MonoBehaviour
                     groundNormal = slopeHit.normal;
                 }
             }
+            //Prevent player from sliding down slopes when not moving
+            bool stoppedOnSlope = (slopeHitFound && inputDirection.x == 0f);
+            PhysicsMaterial2D groundMaterial = groundDefaultFriction;
+            if (stoppedOnSlope)
+            {
+                groundMaterial = groundHeavyFriction;
+            }
+            foreach (RaycastHit2D raycastHit in hit)
+            {
+                raycastHit.collider.sharedMaterial = groundMaterial;
+            }
         }
+
+        //Reduce player friction at times to add more fluid movement
+        if (!grounded)
+        {
+            playerMaterial = playerLessFriction;
+        }
+        playerRB.sharedMaterial = playerMaterial;
 
         //Player direction
         if (inputDirection.x > 0)
@@ -128,21 +166,13 @@ public class Movement : MonoBehaviour
             facingRight = false;
         }
 
-        //Detect slopes
-        /*
-        RaycastHit2D slopeHit = Physics2D.BoxCast(playerRB.transform.position + new Vector3(0.5f * (facingRight ? 1f : -1f), -0.945f), new Vector2(0.1f, 0.1f), 0f, Vector2.up, 1f, groundLayer);
-        if (slopeHit && slopeHit.transform.gameObject.CompareTag("Ground"))
-        {
-            groundNormal = slopeHit.normal;
-        }
-        */
-
         //Reset jump & dash
-        bool jumping = jumpInputDown && jumpHoldDuration <= maxJumpHoldTime && playerRB.linearVelocityY >= 0f;
+        bool jumping = jumpInputDown && jumpHoldDuration < maxJumpHoldTime && playerRB.linearVelocityY >= 0f;
         if (grounded && !jumping)
         {
             jumpHoldDuration = 0.0f;
             dashesRemaining = maxDashes;
+            firstFrameOfJump = true;
         }
 
         //Gravity shit
@@ -185,24 +215,22 @@ public class Movement : MonoBehaviour
         ///////////////////////////////////////////////////
         if (jumpInputDown)
         {
-            bool firstFrameOfJump = jumpHoldDuration == 0f;
-            jumpHoldDuration += Time.deltaTime;
-            if(jumpHoldDuration <= 0)
-            {
-                playerRB.linearVelocityY = 0f;
-            }
-            if (jumpHoldDuration <= maxJumpHoldTime && playerRB.linearVelocityY >= 0f)
+            Debug.Log(jumpHoldDuration);
+            jumpHoldDuration = Mathf.Min(jumpHoldDuration + Time.deltaTime, maxJumpHoldTime);
+            if (jumpHoldDuration <= maxJumpHoldTime && (grounded || playerRB.linearVelocityY >= 0f))
             {
                 float higherJumpMultiplier = (1f - (jumpHoldDuration / maxJumpHoldTime)) * 0.75f;
                 higherJumpMultiplier = Mathf.Sqrt(1f - Mathf.Pow(higherJumpMultiplier - 1f, 2f)); //Higher jump multiplier follows circ-out easing curve
                                                                                                   //Meaning the longer the button is held the less force is applied
                 if (firstFrameOfJump)   //More impulse on the first frame of the jump
                 {
+                    playerRB.linearVelocityY = 0f;
                     higherJumpMultiplier = 2f;
                 }
                 playerRB.AddForce(transform.up * jumpSpeed * higherJumpMultiplier, ForceMode2D.Impulse);
                 //add gm.GetJumpHeightMod() later
             }
+            firstFrameOfJump = false;
         }
 
         //MOVEMENT
@@ -222,17 +250,6 @@ public class Movement : MonoBehaviour
             moveDirection = inputDirection;
         }
 
-        //Debug.Log(moveDirection);
-
-        //Increase friction of slope when player is stopped on it
-        /*
-        bool onSlope = Mathf.Abs(groundNormalAngle) * Mathf.Rad2Deg - 2f >= 90f && Mathf.Abs(groundNormalAngle) * Mathf.Rad2Deg + 2f <= 90f;
-        if (onSlope && Mathf.Abs(inputDirection.x) - 0.1f <= 0f)
-        {
-            Debug.Log("Stopped on slope!");
-        }
-        */
-
         //Reduce control of movement in air
         if (!grounded) { movementMultiplier = 0.1f; }
         //Reduce max speed when on slopes
@@ -247,42 +264,6 @@ public class Movement : MonoBehaviour
         playerRB.AddForce(moveDirection * movementAcceleration * Mathf.Abs(inputDirection.x) * movementMultiplier);
 
         //Debug.Log("Ground: " + Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg + " / Movement: " + movementAngle * Mathf.Rad2Deg);
-
-        /*s
-        if (Input.GetKey(KeyCode.A))
-        {
-            if (playerRB.linearVelocityX > -10)
-            {
-                if (grounded == true)
-                {
-                    transform.rotation = Quaternion.Euler(0, -180, 0);
-                    playerRB.AddForce(transform.right * moveSpeed);
-                }
-                else
-                {
-                    transform.rotation = Quaternion.Euler(0, -180, 0);
-                    playerRB.AddForce(transform.right * moveSpeed * 0.1f);
-                }
-            };
-
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            if (playerRB.linearVelocityX < 10)
-            {
-                if (grounded == true)
-                {
-                    playerRB.AddForce(transform.right * moveSpeed);
-                    transform.rotation = Quaternion.Euler(0, 0, 0);
-                }
-                else
-                {
-                    playerRB.AddForce(transform.right * moveSpeed * 0.1f);
-                    transform.rotation = Quaternion.Euler(0, 0, 0);
-                }
-            };
-        }
-        */
 
     }
 }
