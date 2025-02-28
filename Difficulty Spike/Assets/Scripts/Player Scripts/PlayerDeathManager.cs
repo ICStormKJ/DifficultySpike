@@ -14,9 +14,16 @@ public class PlayerDeathManager : MonoBehaviour
     [SerializeField]
     GlobalManager globalStats;
     
+    //update a spawnpoint
+    public void Checkpoint(Transform newpos){
+        spawnpoint = newpos;
+    }
+
     //respawn the player, trigger a random death mechanic and remove it from the list to not be chosen again.
     void Death(){
         transform.position = spawnpoint.position;
+        if (deathMechanicObjects.Count == 0){return;}//prune when no (more) objects to trigger
+
         int index = Random.Range(0, deathMechanicObjects.Count);
         DeathMechanic obj = deathMechanicObjects[index];
         obj.Run();
@@ -27,7 +34,7 @@ public class PlayerDeathManager : MonoBehaviour
     void Win(){
        // globalStats.AddModifier(0.05f, 0.05f);
         Debug.Log("Win");
-        //SceneManager.LoadScene(nextSceneName);
+        SceneManager.LoadScene(nextSceneName);
     }
 
     //Behaviour when colliding with either a spike or a winning item.
