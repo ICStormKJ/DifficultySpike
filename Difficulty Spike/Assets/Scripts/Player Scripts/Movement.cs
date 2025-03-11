@@ -1,4 +1,6 @@
+using System;
 using Unity.VisualScripting.Dependencies.Sqlite;
+using UnityEditor.ShaderGraph;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -92,7 +94,21 @@ public class Movement : MonoBehaviour
         groundNormal = Vector3.up;
         grounded = false;
         PhysicsMaterial2D playerMaterial = playerDefaultFriction;
-        if (hit.Length > 0)
+        
+        //logic to fix wall cling
+        bool horizontalNormal = false;
+        foreach(RaycastHit2D hits in hit){
+            Debug.DrawRay(groundCheck.position, hits.normal, Color.green);
+            if (Mathf.Abs(hits.normal.x) == 1){
+                horizontalNormal = true;
+            }
+            if (hits.normal.x == 0){
+                horizontalNormal = false;
+                break;
+            }
+        }
+
+        if (hit.Length > 0 && !horizontalNormal)
         {
             grounded = true;
             //Set the player's ground normal depending on whether they're on/off a slope or boarding a slope
