@@ -21,6 +21,7 @@ public class PlayerDeathManager : MonoBehaviour
 
     //respawn the player, trigger a random death mechanic and remove it from the list to not be chosen again.
     void Death(){
+        GetComponent<Rigidbody2D>().linearVelocity = Vector2.zero;
         transform.position = spawnpoint.position;
         if (deathMechanicObjects.Count == 0){return;}//prune when no (more) objects to trigger
 

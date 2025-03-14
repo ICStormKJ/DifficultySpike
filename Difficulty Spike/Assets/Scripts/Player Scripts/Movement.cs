@@ -6,22 +6,25 @@ using UnityEngine.InputSystem;
 
 public class Movement : MonoBehaviour
 {
-    //Variables
-    //-------------------------------------------------------
+    //---------------GENERAL STUFF---------------
     [SerializeField] private Rigidbody2D playerRB;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundLayer;
 
+    //---------------PHYSICS---------------
     [SerializeField] private PhysicsMaterial2D playerDefaultFriction;
     [SerializeField] private PhysicsMaterial2D playerLessFriction;
     [SerializeField] private PhysicsMaterial2D groundDefaultFriction;
     [SerializeField] private PhysicsMaterial2D groundHeavyFriction;
 
+    //---------------MOVEMENT---------------
     [SerializeField] private float jumpSpeed;
     [SerializeField] private float movementAcceleration;
     [SerializeField] private float moveSpeedSoftCap;
     [SerializeField] private float dashSpeed = 15f;
+    [SerializeField] private float dgrav = 1f;
 
+    //---------------JUMP AND DASHING---------------
     private float jumpHoldDuration = 0.0f;    
     private float maxJumpHoldTime = 0.2f;           //How long in seconds it takes for a jump to reach its apex
 
@@ -98,7 +101,6 @@ public class Movement : MonoBehaviour
         //logic to fix wall cling
         bool horizontalNormal = false;
         foreach(RaycastHit2D hits in hit){
-            Debug.DrawRay(groundCheck.position, hits.normal, Color.green);
             if (Mathf.Abs(hits.normal.x) == 1){
                 horizontalNormal = true;
             }
@@ -192,13 +194,14 @@ public class Movement : MonoBehaviour
         }
 
         //Gravity shit
+        //NOTE FROM KAI: I am experimenting with the gravity gradually increasing instead of spiking for smoother falling.
         if (grounded || playerRB.linearVelocity.y >= 0f || dashTimer < dashDuration)
         {
             playerRB.gravityScale = 1f;
         }
-        else
+        else if(playerRB.gravityScale < 3)
         {
-            playerRB.gravityScale = 3f;
+            playerRB.gravityScale += Time.deltaTime * dgrav;
         }
 
         //Dashing
@@ -231,7 +234,7 @@ public class Movement : MonoBehaviour
         ///////////////////////////////////////////////////
         if (jumpInputDown)
         {
-            Debug.Log(jumpHoldDuration);
+            //Debug.Log(jumpHoldDuration);
             jumpHoldDuration = Mathf.Min(jumpHoldDuration + Time.deltaTime, maxJumpHoldTime);
             if (jumpHoldDuration <= maxJumpHoldTime && (grounded || playerRB.linearVelocityY >= 0f))
             {
