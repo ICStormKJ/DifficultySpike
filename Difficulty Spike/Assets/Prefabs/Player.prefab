@@ -59,10 +59,11 @@ MonoBehaviour:
   playerLessFriction: {fileID: 6200000, guid: 4e34155ae4349c9429e50f56fc03c983, type: 2}
   groundDefaultFriction: {fileID: 6200000, guid: e2ef7709747d38b43a131bb54a512a0a, type: 2}
   groundHeavyFriction: {fileID: 6200000, guid: 22f3611cfaf4c4c44964891d1aa54ab2, type: 2}
-  jumpSpeed: 1.75
+  jumpSpeed: 2
   movementAcceleration: 50
   moveSpeedSoftCap: 10
-  dashSpeed: 15
+  dashSpeed: 12
+  dgrav: 1
 --- !u!114 &901524335322863737
 MonoBehaviour:
   m_ObjectHideFlags: 0
