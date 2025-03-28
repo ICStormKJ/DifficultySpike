@@ -24,6 +24,10 @@ public class Movement : MonoBehaviour
     [SerializeField] private float dashSpeed = 15f;
     [SerializeField] private float dgrav = 1f;
 
+    //-------------ANIMATION----------------
+    [SerializeField] private SpriteRenderer sprite;
+    [SerializeField] private Animator playerAnimator;
+
     //---------------JUMP AND DASHING---------------
     private float jumpHoldDuration = 0.0f;    
     private float maxJumpHoldTime = 0.2f;           //How long in seconds it takes for a jump to reach its apex
@@ -45,7 +49,6 @@ public class Movement : MonoBehaviour
     private bool facingRight = true;
     private Vector3 groundNormal;
 
-
     //Movement Methods
     //-------------------------------------------------------
     public void movementInput(InputAction.CallbackContext context)
@@ -53,6 +56,7 @@ public class Movement : MonoBehaviour
         inputDirection = context.ReadValue<Vector2>();
         inputDirection.y = 0f;
         inputDirection = inputDirection.normalized;
+
     }
 
     public void jumpInput(InputAction.CallbackContext context)
@@ -184,6 +188,21 @@ public class Movement : MonoBehaviour
             facingRight = false;
         }
 
+        //Animation
+        if(inputDirection.x == 0){
+            playerAnimator.Play("Idle");
+        }
+        else{
+            if(facingRight){
+                sprite.flipX = false;
+                playerAnimator.Play("WalkRight");
+            }
+            else{
+                sprite.flipX = true;
+                playerAnimator.Play("WalkLeft");
+            }
+        }
+
         //Reset jump & dash
         bool jumping = jumpInputDown && jumpHoldDuration < maxJumpHoldTime && playerRB.linearVelocityY >= 0f;
         if (grounded && !jumping)
@@ -281,7 +300,6 @@ public class Movement : MonoBehaviour
 
         //Apply movement force
         playerRB.AddForce(moveDirection * movementAcceleration * Mathf.Abs(inputDirection.x) * movementMultiplier);
-
         //Debug.Log("Ground: " + Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg + " / Movement: " + movementAngle * Mathf.Rad2Deg);
 
     }
