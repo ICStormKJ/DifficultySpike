@@ -23,6 +23,8 @@ public class Movement : MonoBehaviour
     [SerializeField] private float moveSpeedSoftCap;
     [SerializeField] private float dashSpeed = 15f;
     [SerializeField] private float dgrav = 1f;
+    private float dgravCopy;
+    [SerializeField] private float maxFallSpeed = 30f;
 
     //-------------ANIMATION----------------
     [SerializeField] private SpriteRenderer sprite;
@@ -90,6 +92,7 @@ public class Movement : MonoBehaviour
     void Start()
     {
         playerRB = GetComponent<Rigidbody2D>();
+        dgravCopy = dgrav;
         //gm = FindAnyObjectByType<GlobalManager>();
     }
 
@@ -193,13 +196,46 @@ public class Movement : MonoBehaviour
             playerAnimator.Play("Idle");
         }
         else{
-            if(facingRight){
-                sprite.flipX = false;
-                playerAnimator.Play("WalkRight");
+            if(playerRB.linearVelocityY != 0){
+                if(playerRB.linearVelocityY > 0){
+                    //jumping animation
+                    if(facingRight){
+                        //right facing jump
+                    }
+                    else{
+                        //left facing jump
+                    }
+                }
+                else{
+                    //falling down animation
+                    if(facingRight){
+                        //right facing fall
+                    }
+                    else{   
+                        //left facing fall
+                    }
+                }
             }
             else{
-                sprite.flipX = true;
-                playerAnimator.Play("WalkLeft");
+                if(inputDirection.x == 0){
+                    //skidding animation
+                    if(facingRight){
+                        //right-facing skidding animation
+                    }
+                    else{
+                        //left facing skidding animation
+                    }
+                }
+                else{
+                    if(facingRight){
+                        sprite.flipX = false;
+                        playerAnimator.Play("WalkRight");
+                    }
+                    else{
+                        sprite.flipX = true;
+                        playerAnimator.Play("WalkLeft");
+                    }
+                }
             }
         }
 
@@ -237,10 +273,13 @@ public class Movement : MonoBehaviour
                 playerRB.linearVelocityY = jumpSpeed;
             }
             playerRB.AddForce(transform.right * dashDirection * dashSpeed, ForceMode2D.Impulse);
-        }
-        if(!grounded && dashTimer < dashDuration)   //Give player a bit of weightlessness when dashing
-        {
-           // playerRB.AddForce(Vector2.up * -Physics2D.gravity * 0.5f, ForceMode2D.Force);
+            //Play dash animation
+            if(dashDirection == 1){
+                //right dash animation
+            }
+            else{
+                //left dash animation
+            }
         }
 
         //Cooldowns
@@ -293,7 +332,7 @@ public class Movement : MonoBehaviour
         //Reduce max speed when on slopes
         float moveSpeedCap = moveSpeedSoftCap;
         float xDirection = Mathf.Abs(moveDirection.x);
-        moveSpeedCap *= (1f - (1f - xDirection) * (1f - xDirection));
+        moveSpeedCap *= 1f - (1f - xDirection) * (1f - xDirection);
         //Limit force applied to control speed
         bool movingInDirectionOfSpeed = Mathf.Sign(inputDirection.x) == Mathf.Sign(playerRB.linearVelocityX);
         if (movingInDirectionOfSpeed && Mathf.Abs(playerRB.linearVelocityX) >= moveSpeedCap) { movementMultiplier = 0f; }
@@ -301,6 +340,15 @@ public class Movement : MonoBehaviour
         //Apply movement force
         playerRB.AddForce(moveDirection * movementAcceleration * Mathf.Abs(inputDirection.x) * movementMultiplier);
         //Debug.Log("Ground: " + Mathf.Atan2(groundNormal.y, groundNormal.x) * Mathf.Rad2Deg + " / Movement: " + movementAngle * Mathf.Rad2Deg);
+
+        
+
+        if(playerRB.linearVelocityY <= maxFallSpeed){
+            dgrav = 0;
+        }
+        if(grounded){
+            dgrav = dgravCopy;
+        }
 
     }
 }
