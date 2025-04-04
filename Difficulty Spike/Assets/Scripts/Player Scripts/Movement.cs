@@ -192,7 +192,7 @@ public class Movement : MonoBehaviour
         }
 
         //Animation
-        if(inputDirection.x == 0){
+        if(inputDirection.x == 0 && playerRB.linearVelocityX == 0 && playerRB.linearVelocityY == 0){
             playerAnimator.Play("Idle");
         }
         else{
@@ -200,30 +200,41 @@ public class Movement : MonoBehaviour
                 if(playerRB.linearVelocityY > 0){
                     //jumping animation
                     if(facingRight){
-                        //right facing jump
+                        sprite.flipX = false;
+                        playerAnimator.Play("Jump");
                     }
                     else{
                         //left facing jump
+                        sprite.flipX = true;
+                        playerAnimator.Play("Jump");
                     }
                 }
                 else{
                     //falling down animation
                     if(facingRight){
                         //right facing fall
+                        sprite.flipX = false;
+                        playerAnimator.Play("Fall");
                     }
                     else{   
                         //left facing fall
+                        sprite.flipX = true;
+                        playerAnimator.Play("Fall");
                     }
                 }
             }
             else{
-                if(inputDirection.x == 0){
+                if(inputDirection.x > -0.05 && inputDirection.x < 0.05){
                     //skidding animation
                     if(facingRight){
                         //right-facing skidding animation
+                        sprite.flipX = false;
+                        playerAnimator.Play("Skid");
                     }
                     else{
                         //left facing skidding animation
+                        sprite.flipX = true;
+                        playerAnimator.Play("Skid");
                     }
                 }
                 else{
